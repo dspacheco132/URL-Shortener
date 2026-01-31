@@ -1,0 +1,61 @@
+services:
+  cassandra:
+    image: cassandra:4.1
+    container_name: cassandra-db
+    hostname: cassandra
+    ports:
+      - "9042:9042"  # CQL native transport
+      - "9160:9160"  # Thrift client API (legacy)
+    environment:
+      - CASSANDRA_CLUSTER_NAME=CassandraCluster
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+    volumes:
+      - ./cassandra_data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe cluster' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-db
+    hostname: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  app:
+    build: ./app
+    container_name: url-shortener-app
+    ports:
+      - "3000:3000"
+    environment:
+      CASSANDRA_HOST: cassandra
+      CASSANDRA_PORT: "9042"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      BASE_URL: ${BASE_URL:-http://localhost:3000}
+      PORT: "3000"
+    depends_on:
+      cassandra:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  cassandra_data:
+  redis_data:

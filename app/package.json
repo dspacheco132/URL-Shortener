@@ -1,0 +1,18 @@
+{
+  "name": "url-shortener",
+  "version": "1.0.0",
+  "description": "URL shortener with Cassandra and Hashids (base62-style, custom alphabet + secret)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "init-db": "node src/init-db.js"
+  },
+  "dependencies": {
+    "cassandra-driver": "^4.7.2",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "hashids": "^2.2.10",
+    "ioredis": "^5.3.2"
+  }
+}

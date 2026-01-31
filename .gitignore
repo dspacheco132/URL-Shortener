@@ -1,0 +1,4 @@
+/app/.env
+/app/node_modules
+/cassandra_data
+/redis_data
