@@ -86,7 +86,8 @@ The `app/` folder contains a URL shortener that uses:
 docker compose up -d
 ```
 
-The app is available at **http://localhost:3000**.
+- **Frontend (Next.js):** http://localhost:8080 — UI for shortening URLs; API calls are proxied server-side to the backend
+- **Backend (API):** http://localhost:3000 — shorten endpoint, redirects, stats
 
 ### Run the app locally (Cassandra + Redis must be up)
 
@@ -165,6 +166,28 @@ node -e "const a='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
 | `REDIS_COUNTER_KEY` | e.g. `url_counter` (can keep) |
 
 If you change `SECRET_KEY` or `BASE62_ALPHABET` after going live, existing short links will no longer decode correctly; set them once and keep them stable.
+
+## Frontend (Next.js)
+
+The `frontend/` folder contains a Next.js app that provides the UI. It proxies requests to the backend via API routes (`/api/shorten`, `/api/stats/[slug]`), so the browser never talks directly to the backend.
+
+### Run frontend locally (backend + Cassandra + Redis must be up)
+
+```bash
+cd frontend
+cp .env.example .env   # Edit BACKEND_URL if needed (default: http://localhost:3000)
+npm install
+npm run dev
+```
+
+Frontend runs at **http://localhost:20002**.
+
+### Environment
+
+| Variable | Description |
+|----------|-------------|
+| `BACKEND_URL` | Backend API base URL. Local: `http://localhost:3000`, Docker: `http://app:3000` |
+| `FRONTEND_URL` | Public URL of the frontend (for redirects). Production: `https://lnk.diogopacheco.com`; prevents redirects to 0.0.0.0 |
 
 ## Data
 

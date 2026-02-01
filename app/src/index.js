@@ -59,7 +59,7 @@ app.get('/:slug', async (req, res) => {
       return res.status(404).json({ error: 'Not found' });
     }
     await incrementClickCount(slug);
-    return res.redirect(301, row.long_url);
+    return res.redirect(307, row.long_url);
   } catch (err) {
     console.error('Redirect error:', err);
     return res.status(500).json({ error: 'Failed to resolve link' });
