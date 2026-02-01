@@ -4,6 +4,7 @@
 /redis_data
 /docs
 /frontend/.env
+/logs
 
 # Logs
 /frontend/logs
@@ -30,3 +31,4 @@
 /frontend/*.njsproj
 /frontend/*.sln
 /frontend/*.sw?
+.DS_Store
