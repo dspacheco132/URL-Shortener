@@ -189,6 +189,23 @@ Frontend runs at **http://localhost:20002**.
 | `BACKEND_URL` | Backend API base URL. Local: `http://localhost:3000`, Docker: `http://app:3000` |
 | `FRONTEND_URL` | Public URL of the frontend (for redirects). Production: `https://lnk.diogopacheco.com`; prevents redirects to 0.0.0.0 |
 
+## Security (Trivy)
+
+Run [Trivy](https://trivy.dev/) via the script (uses Docker; no local Trivy install needed):
+
+```bash
+./scripts/trivy.sh          # all: config + fs + image
+./scripts/trivy.sh config   # Dockerfiles + docker-compose misconfig
+./scripts/trivy.sh fs       # app/ and frontend/ dependency vulnerabilities
+./scripts/trivy.sh image    # built Docker images (run after docker compose build)
+```
+
+- **config** — scans `app/Dockerfile`, `frontend/Dockerfile`, and `docker-compose.yml`.
+- **fs** — scans `app/` and `frontend/` lockfiles for known vulnerabilities.
+- **image** — scans the built `url-shortener-app` and `url-shortener-frontend` images; build first with `docker compose build app frontend`.
+
+Output is also written to a timestamped log file under `logs/` (e.g. `logs/trivy-20250131-143022.log`). Override with `TRIVY_LOG_FILE=/path/to/file.log`.
+
 ## Data
 
 Data is persisted in the `cassandra_data` and `redis_data` volumes. Even after stopping the containers, data is kept until you run `docker compose down -v`.
