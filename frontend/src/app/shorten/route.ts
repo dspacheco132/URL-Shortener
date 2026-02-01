@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3000";
 const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:8080";
 
-function getBaseUrl(request: NextRequest): string {
+function getBaseUrl(): string {
   return FRONTEND_URL.replace(/\/$/, "");
 }
 
@@ -17,7 +17,7 @@ function isValidUrl(string: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  const baseUrl = getBaseUrl(request);
+  const baseUrl = getBaseUrl();
 
   try {
     const formData = await request.formData();
