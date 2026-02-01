@@ -1,0 +1,147 @@
+name: CI/CD - Build Test
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+
+jobs:
+  test-app:
+    name: Test Backend (App)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: app
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit dependencies for vulnerabilities
+        run: npm audit --audit-level=moderate
+        continue-on-error: false
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit dependencies for vulnerabilities
+        run: npm audit --audit-level=moderate
+        continue-on-error: false
+
+      - name: Run linter
+        run: npm run lint
+        continue-on-error: false
+
+      - name: Type check
+        run: npx tsc --noEmit
+        continue-on-error: false
+
+      - name: Build project
+        run: npm run build
+        continue-on-error: false
+
+      - name: Check build output
+        run: |
+          if [ ! -d ".next" ]; then
+            echo "❌ Build failed: .next directory not found"
+            exit 1
+          fi
+
+          if [ ! -f ".next/BUILD_ID" ]; then
+            echo "❌ Build failed: BUILD_ID not found in .next"
+            exit 1
+          fi
+
+          echo "✅ Build successful: Next.js build artifacts present"
+          ls -lah .next/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: frontend-build-${{ matrix.node-version }}
+          path: frontend/.next/
+          retention-days: 1
+
+  security-scan:
+    name: Security Scan with Trivy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '1'
+          scanners: 'vuln,secret,config'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run Trivy filesystem scan (detailed report)
+        uses: aquasecurity/trivy-action@master
+        if: always()
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '0'
